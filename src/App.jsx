@@ -6,7 +6,7 @@ import './App.css';
 
 //Firebase Component
 const firebaseConfig = {
-  apiKey: "AIzaSyDziRCKYwnkdA1RtSn8XMMSENos1wnRX20",
+  apiKey: import.meta.env.FIREBASE_API_KEY,
   authDomain: "buddyup-92a14.firebaseapp.com",
   projectId: "buddyup-92a14",
   storageBucket: "buddyup-92a14.firebasestorage.app",
