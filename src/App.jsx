@@ -1,19 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import {initializeApp} from 'firebase/app';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signOut, signInWithPopup} from 'firebase/auth';
 import './App.css';
+
+//Firebase Component
+const firebaseConfig = {
+  apiKey: "AIzaSyDziRCKYwnkdA1RtSn8XMMSENos1wnRX20",
+  authDomain: "buddyup-92a14.firebaseapp.com",
+  projectId: "buddyup-92a14",
+  storageBucket: "buddyup-92a14.firebasestorage.app",
+  messagingSenderId: "508756983687",
+  appId: "1:508756983687:web:b54afaa3816bb3b5e2dd22",
+  measurementId: "G-K9H1S85E45"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+//Initialize Firebase authentication
+export const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+
 
 // Main App Component
 function App() {
+
+    const [user, setUser] = useState(null);
+    useEffect(() => {
+      onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+      });
+    }, []);
+
   return (
     <Router>
       <div className="app-container">
-        <Navbar />
+        <Navbar user = {user}/>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/goals" element={<GoalTracker />} />
           <Route path="/reflections" element={<Reflections />} />
           <Route path="/buddies" element={<AccountabilityBuddies />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile user={user} />} />
         </Routes>
       </div>
     </Router>
@@ -22,15 +52,19 @@ function App() {
 
 // Navigation Component
 function Navbar() {
+
+  const handleLogout = () => signOut(auth);
+
   return (
     <nav className="navbar">
-      <div className="logo">AccountaBuddy</div>
+      <div className="logo">BuddyUp</div>
       <ul className="nav-links">
         <li><Link to="/">Dashboard</Link></li>
         <li><Link to="/goals">Goals</Link></li>
         <li><Link to="/reflections">Reflections</Link></li>
         <li><Link to="/buddies">Buddies</Link></li>
         <li><Link to="/profile">Profile</Link></li>
+        
       </ul>
     </nav>
   );
@@ -39,7 +73,7 @@ function Navbar() {
 // Dashboard Component
 function Dashboard() {
   const [user, setUser] = useState({
-    name: "Alex",
+    name: "Josh",
     dailyCheckIn: false,
     pendingGoals: 3,
     completedGoals: 2,
@@ -368,26 +402,85 @@ function AccountabilityBuddies() {
 }
 
 // User Profile Component
-function Profile() {
+function Profile({ user }) {
   const [profile, setProfile] = useState({
-    name: "Alex",
-    email: "alex@example.com",
+    name: user ? user.displayName || "" : "",
+    email: user ? user.email : "",
     bio: "Computer Science student interested in web development and AI. Looking to build better study habits.",
     values: ["Learning", "Connection", "Innovation"],
     purposeStatement: "To use technology to solve meaningful problems that impact people's daily lives."
   });
-  
+
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({...profile});
-  
+  const [editedProfile, setEditedProfile] = useState({ ...profile });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.displayName || prev.name,
+        email: user.email || prev.email
+      }));
+    }
+  }, [user]);
+
   const handleSaveProfile = () => {
-    setProfile({...editedProfile});
+    setProfile({ ...editedProfile });
     setIsEditing(false);
   };
+
+  const handleSignIn = () => {
+    signInWithEmailAndPassword(auth, email, password)
+      .catch(e => setAuthError(e.message));
+  };
+
+  const handleSignUp = () => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .catch(e => setAuthError(e.message));
+  };
+
+  const handleGoogleSignIn = () => {
+    signInWithPopup(auth, provider)
+      .catch(e => setAuthError(e.message));
+  };
+
+  const handleSignOut = () => {
+    signOut(auth);
+  };
+
+  if (!user) {
+    return (
+      <div className="profile">
+        <h1>Please sign in to view your profile.</h1>
+        <div className="auth-container">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button onClick={handleSignIn} className="primary-btn">Sign In</button>
+          <button onClick={handleSignUp} className="secondary-btn">Sign Up</button>
+          <button onClick = {handleGoogleSignIn} className="google-btn">Sign In with Google</button>
+          {authError && <p style={{color: 'red'}}>{authError}</p>}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="profile">
       <h1>Your Profile</h1>
+     
       
       {isEditing ? (
         <div className="edit-profile">
@@ -455,6 +548,7 @@ function Profile() {
             </div>
             
             <button onClick={() => setIsEditing(true)} className="primary-btn">Edit Profile</button>
+            <button onClick={handleSignOut} className="secondary-btn">Sign Out</button>
           </div>
           
           <div className="stats-section">
