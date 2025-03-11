@@ -18,7 +18,14 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      # Debug Step: Print All Environment Variables
+      - name: Debug Environment Variables
+        run: printenv | grep VITE_
+
       - name: Build Vite Project
         env:
           VITE_FIREBASE_API_KEY: "${{ secrets.VITE_FIREBASE_API_KEY }}"
         run: npm run build
+
+      - name: Deploy (Optional Step)
+        run: echo "Deployment successful (Add your actual deployment steps here)"
