@@ -1,4 +1,3 @@
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is dedicated for students and adults who have a hard time staying disciplined with their schedule/goals.
 
 
